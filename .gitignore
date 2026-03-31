@@ -1,0 +1,38 @@
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+.eggs/
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.tox/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.*
+/nuclei-sdk-bridge
