@@ -14,7 +14,7 @@ func main() {
 		// No WithTemplateDir needed — nuclei loads from ~/.local/nuclei-templates/ by default
 
 		// Set targets to scan
-		nucleisdk.WithTargets("https://go-yubi.com"),
+		nucleisdk.WithTargets("https://example.com"),
 
 		// Filter by tags (not protocol types — "wordpress" is a tag)
 		nucleisdk.WithTags("wordpress"),
