@@ -20,7 +20,7 @@ async def main():
     # Lightweight scan — same engine, shared resources
     print("=== HTTP CVE Scan ===")
     async for result in engine.scan(
-        targets=["https://go-yubi.com"],
+        targets=["https://example.com"],
         tags=["wordpress"],
         protocol_types="http",
     ):
@@ -32,7 +32,7 @@ async def main():
     # Another scan using the same engine (no re-initialization)
     print("\n=== SSL Scan ===")
     async for result in engine.scan(
-        targets=["go-yubi.com:443"],
+        targets=["example.com:443"],
         protocol_types="ssl",
     ):
         if result.error:
