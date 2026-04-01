@@ -43,7 +43,7 @@ func main() {
 				nucleisdk.WithProtocolTypes("http"),
 				nucleisdk.WithTags("cve", "exposure", "misconfig"),
 				nucleisdk.WithSeverityFilter("high", "critical"),
-				nucleisdk.WithTargets("https://go-yubi.com"),
+				nucleisdk.WithTargets("https://example.com"),
 			},
 		},
 
@@ -53,7 +53,7 @@ func main() {
 			Options: []nucleisdk.Option{
 				nucleisdk.WithProtocolTypes("dns"),
 				nucleisdk.WithTags("dns", "cname", "takeover"),
-				nucleisdk.WithTargets("go-yubi.com"),
+				nucleisdk.WithTargets("example.com"),
 			},
 		},
 
@@ -62,7 +62,7 @@ func main() {
 			Label: "ssl",
 			Options: []nucleisdk.Option{
 				nucleisdk.WithProtocolTypes("ssl"),
-				nucleisdk.WithTargets("go-yubi.com:443"),
+				nucleisdk.WithTargets("example.com:443"),
 			},
 		},
 
@@ -72,7 +72,7 @@ func main() {
 			Options: []nucleisdk.Option{
 				nucleisdk.WithProtocolTypes("http"),
 				nucleisdk.WithTags("http"),
-				nucleisdk.WithTargets("https://go-yubi.com"),
+				nucleisdk.WithTargets("https://example.com"),
 			},
 		},
 	)
