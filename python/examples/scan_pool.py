@@ -7,7 +7,7 @@ from nucleisdk import ScanEngine, TemplateBytesEntry
 # Simulated vulnerability feed items
 vuln_feed = [
     {
-        "target": "https://help.accumn.ai",
+        "target": "https://example.com",
         "cve_id": "CVE-2024-1234",
         "template": b"""
 id: CVE-2024-1234
@@ -27,7 +27,7 @@ http:
 """,
     },
     {
-        "target": "https://help.accumn.ai",
+        "target": "https://example.com",
         "cve_id": "CVE-2024-5678",
         "template": b"""
 id: CVE-2024-5678
@@ -39,7 +39,7 @@ info:
 http:
   - method: GET
     path:
-      - "{{BaseURL}}/webhook?url=http://169.254.169.254"
+      - "{{BaseURL}}/webhook?url=http://example.com-ip"
     matchers:
       - type: word
         words:
@@ -79,7 +79,7 @@ async def main():
     # Also submit a filter-based scan
     await pool.submit(
         label="Tech scan",
-        targets=["https://www.aspero.in/"],
+        targets=["https://example.com"],
         tags=["tech"],
         protocol_types="http",
     )
