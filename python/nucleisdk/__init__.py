@@ -10,6 +10,7 @@ from .models import (
     PoolStats,
     ScanOptions,
     ScanResult,
+    TargetRequest,
     TemplateBytesEntry,
 )
 from .pool import ScanPool
@@ -71,6 +72,7 @@ __all__ = [
     "ScanOptions",
     "LabeledResult",
     "PoolStats",
+    "TargetRequest",
     "TemplateBytesEntry",
     "EngineConfig",
     "BridgeError",
@@ -111,4 +113,4 @@ __all__ = [
     "parse_template_info",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

@@ -1,7 +1,7 @@
 import base64
 import unittest
 
-from nucleisdk.models import EngineConfig, ScanOptions, TemplateBytesEntry
+from nucleisdk.models import EngineConfig, ScanOptions, TargetRequest, TemplateBytesEntry
 
 
 class TestModels(unittest.TestCase):
@@ -35,6 +35,52 @@ class TestModels(unittest.TestCase):
         self.assertEqual(d["tags"], ["cve"])
         self.assertIn("template_bytes", d)
         self.assertEqual(d["template_bytes"][0]["name"], "t1")
+
+
+    def test_target_request_to_dict(self):
+        tr = TargetRequest(
+            url="https://example.com/api/users",
+            method="POST",
+            headers={"Content-Type": "application/json"},
+            body='{"name":"test"}',
+        )
+        d = tr.to_dict()
+        self.assertEqual(d["url"], "https://example.com/api/users")
+        self.assertEqual(d["method"], "POST")
+        self.assertEqual(d["headers"]["Content-Type"], "application/json")
+        self.assertEqual(d["body"], '{"name":"test"}')
+
+    def test_target_request_to_dict_minimal(self):
+        tr = TargetRequest(url="https://example.com/health", method="GET")
+        d = tr.to_dict()
+        self.assertEqual(d["url"], "https://example.com/health")
+        self.assertEqual(d["method"], "GET")
+        self.assertNotIn("headers", d)
+        self.assertNotIn("body", d)
+
+    def test_scan_options_with_request_response_targets(self):
+        opts = ScanOptions(
+            targets=["https://example.com"],
+            request_response_targets=[
+                TargetRequest(
+                    url="https://example.com/api/users",
+                    method="POST",
+                    headers={"Content-Type": "application/json"},
+                    body='{"name":"test"}',
+                ),
+            ],
+        )
+        d = opts.to_dict()
+        self.assertIn("request_response_targets", d)
+        self.assertEqual(len(d["request_response_targets"]), 1)
+        rrt = d["request_response_targets"][0]
+        self.assertEqual(rrt["method"], "POST")
+        self.assertEqual(rrt["url"], "https://example.com/api/users")
+
+    def test_scan_options_omits_empty_request_response_targets(self):
+        opts = ScanOptions(targets=["https://example.com"])
+        d = opts.to_dict()
+        self.assertNotIn("request_response_targets", d)
 
 
 if __name__ == "__main__":

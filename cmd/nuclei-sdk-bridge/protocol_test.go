@@ -38,13 +38,61 @@ func TestBridgeScanOptionsToScanOptions(t *testing.T) {
 	}
 }
 
+func TestBridgeScanOptionsWithRequestResponseTargets(t *testing.T) {
+	in := &BridgeScanOptions{
+		RequestResponseTargets: []BridgeRequestResponseTarget{
+			{
+				URL:    "https://example.com/api/users",
+				Method: "POST",
+				Headers: map[string]string{
+					"Content-Type":  "application/json",
+					"Authorization": "Bearer token123",
+				},
+				Body: `{"name":"test"}`,
+			},
+			{
+				URL:    "https://example.com/api/health",
+				Method: "GET",
+			},
+		},
+	}
+
+	out := in.toScanOptions()
+
+	if len(out.RequestResponseTargets) != 2 {
+		t.Fatalf("expected 2 RequestResponseTargets, got %d", len(out.RequestResponseTargets))
+	}
+
+	rrt := out.RequestResponseTargets[0]
+	if rrt.URL != "https://example.com/api/users" {
+		t.Fatalf("unexpected URL: %s", rrt.URL)
+	}
+	if rrt.Method != "POST" {
+		t.Fatalf("unexpected method: %s", rrt.Method)
+	}
+	if rrt.Headers["Content-Type"] != "application/json" {
+		t.Fatalf("unexpected Content-Type: %v", rrt.Headers)
+	}
+	if rrt.Body != `{"name":"test"}` {
+		t.Fatalf("unexpected body: %s", rrt.Body)
+	}
+
+	rrt2 := out.RequestResponseTargets[1]
+	if rrt2.Method != "GET" {
+		t.Fatalf("expected GET for second target, got %s", rrt2.Method)
+	}
+	if len(rrt2.Headers) != 0 {
+		t.Fatalf("expected no headers for second target, got %v", rrt2.Headers)
+	}
+}
+
 func TestScanResultToData(t *testing.T) {
 	in := &nucleisdk.ScanResult{
-		TemplateID:   "tpl-1",
-		TemplateName: "Test",
-		Severity:     "high",
-		Host:         "example.com",
-		MatchedURL:   "https://example.com",
+		TemplateID:    "tpl-1",
+		TemplateName:  "Test",
+		Severity:      "high",
+		Host:          "example.com",
+		MatchedURL:    "https://example.com",
 		MatcherStatus: true,
 	}
 

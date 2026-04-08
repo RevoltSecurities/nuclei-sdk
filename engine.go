@@ -19,11 +19,13 @@ import (
 	"github.com/projectdiscovery/nuclei/v3/pkg/core"
 	"github.com/projectdiscovery/nuclei/v3/pkg/input"
 	"github.com/projectdiscovery/nuclei/v3/pkg/input/provider"
+	inputtypes "github.com/projectdiscovery/nuclei/v3/pkg/input/types"
 	"github.com/projectdiscovery/nuclei/v3/pkg/installer"
 	"github.com/projectdiscovery/nuclei/v3/pkg/loader/workflow"
 	"github.com/projectdiscovery/nuclei/v3/pkg/output"
 	"github.com/projectdiscovery/nuclei/v3/pkg/progress"
 	"github.com/projectdiscovery/nuclei/v3/pkg/protocols"
+	"github.com/projectdiscovery/nuclei/v3/pkg/protocols/common/contextargs"
 	"github.com/projectdiscovery/nuclei/v3/pkg/protocols/common/hosterrorscache"
 	"github.com/projectdiscovery/nuclei/v3/pkg/protocols/common/interactsh"
 	"github.com/projectdiscovery/nuclei/v3/pkg/protocols/common/protocolinit"
@@ -35,6 +37,8 @@ import (
 	"github.com/projectdiscovery/nuclei/v3/pkg/types"
 	nucleiUtils "github.com/projectdiscovery/nuclei/v3/pkg/utils"
 	"github.com/projectdiscovery/ratelimit"
+	mapsutil "github.com/projectdiscovery/utils/maps"
+	urlutil "github.com/projectdiscovery/utils/url"
 )
 
 // ScanEngine provides a high-performance, concurrent scanning API.
@@ -298,7 +302,7 @@ func (se *ScanEngine) Scan(ctx context.Context, scanOpts *ScanOptions) (<-chan *
 	if err != nil {
 		return nil, fmt.Errorf("resolving targets: %w", err)
 	}
-	if len(targets) == 0 {
+	if len(targets) == 0 && len(scanOpts.RequestResponseTargets) == 0 {
 		return nil, fmt.Errorf("no targets provided")
 	}
 
@@ -455,6 +459,37 @@ func (se *ScanEngine) executeScan(ctx context.Context, tmplList []*templates.Tem
 
 	// Create per-scan input provider
 	inputProvider := provider.NewSimpleInputProviderWithUrls(perScanOpts.ExecutionId, targets...)
+
+	// Add RequestResponseTargets (full HTTP request metadata for DAST fuzzing).
+	// These create MetaInput entries with ReqResp populated, so nuclei's fuzzing
+	// engine takes the ReqResp path and preserves the HTTP method, headers, and body.
+	for _, rrt := range scanOpts.RequestResponseTargets {
+		parsed, err := urlutil.ParseAbsoluteURL(rrt.URL, false)
+		if err != nil {
+			gologger.Warning().Msgf("skipping RequestResponseTarget with invalid URL %q: %v", rrt.URL, err)
+			continue
+		}
+		headers := mapsutil.NewOrderedMap[string, string]()
+		for k, v := range rrt.Headers {
+			headers.Set(k, v)
+		}
+		method := rrt.Method
+		if method == "" {
+			method = "GET"
+		}
+		rr := &inputtypes.RequestResponse{
+			URL: *parsed,
+			Request: &inputtypes.HttpRequest{
+				Method:  method,
+				Headers: headers,
+				Body:    rrt.Body,
+			},
+		}
+		metaInput := contextargs.NewMetaInput()
+		metaInput.ReqResp = rr
+		metaInput.Input = rrt.URL
+		inputProvider.Inputs = append(inputProvider.Inputs, metaInput)
+	}
 
 	// Create per-scan workflow loader
 	workflowLoader, err := workflow.NewLoader(execOpts)
@@ -768,19 +803,20 @@ func (se *ScanEngine) parseConcurrentScan(scan ConcurrentScan) (*ScanOptions, er
 	}
 
 	return &ScanOptions{
-		Targets:              cfg.targets,
-		TargetFile:           cfg.targetFile,
-		Tags:                 cfg.tags,
-		ExcludeTags:          cfg.excludeTags,
-		Severities:           cfg.severity,
-		ProtocolTypes:        cfg.protocolTypes,
-		TemplateIDs:          cfg.templateIDs,
-		ExcludeIDs:           cfg.excludeIDs,
-		Authors:              cfg.authors,
-		TemplateFiles:        cfg.templateFiles,
-		TemplateDirs:         cfg.templateDirs,
-		TemplateBytes:        cfg.templateBytes,
-		ResultSeverityFilter: cfg.resultSeverityFilter,
+		Targets:                cfg.targets,
+		TargetFile:             cfg.targetFile,
+		RequestResponseTargets: cfg.reqRespTargets,
+		Tags:                   cfg.tags,
+		ExcludeTags:            cfg.excludeTags,
+		Severities:             cfg.severity,
+		ProtocolTypes:          cfg.protocolTypes,
+		TemplateIDs:            cfg.templateIDs,
+		ExcludeIDs:             cfg.excludeIDs,
+		Authors:                cfg.authors,
+		TemplateFiles:          cfg.templateFiles,
+		TemplateDirs:           cfg.templateDirs,
+		TemplateBytes:          cfg.templateBytes,
+		ResultSeverityFilter:   cfg.resultSeverityFilter,
 	}, nil
 }
 

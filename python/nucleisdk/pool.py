@@ -13,6 +13,7 @@ from .models import (
     PoolStats,
     ScanOptions,
     ScanResult,
+    TargetRequest,
     TemplateBytesEntry,
 )
 
@@ -88,6 +89,7 @@ class ScanPool:
         template_dirs: Optional[List[str]] = None,
         template_bytes: Optional[List[TemplateBytesEntry]] = None,
         result_severity_filter: Optional[List[str]] = None,
+        request_response_targets: Optional[List[TargetRequest]] = None,
     ) -> None:
         """Submit a labeled scan job to the pool.
 
@@ -95,6 +97,7 @@ class ScanPool:
             label: Identifier for this job (e.g., CVE ID, scan type).
             targets: URLs/domains/IPs to scan.
             result_severity_filter: Only return results matching these severities.
+            request_response_targets: Full HTTP request targets for DAST fuzzing.
             ... (same scan options as ScanEngine.scan)
         """
         if self._closed:
@@ -114,6 +117,7 @@ class ScanPool:
             template_dirs=template_dirs or [],
             template_bytes=template_bytes or [],
             result_severity_filter=result_severity_filter or [],
+            request_response_targets=request_response_targets or [],
         )
 
         submit_id = f"pool-submit-{uuid.uuid4().hex[:8]}"

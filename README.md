@@ -34,7 +34,7 @@
 - **ScanPool** — bounded worker pool for continuous scanning from APIs, queues, webhooks, or vulnerability feeds
 - **RunParallel** — fire multiple scan types simultaneously (HTTP CVEs + DNS takeover + SSL audit) with labeled results
 - **4 preset scanners** — Web, API Security, WordPress, Network — ready to use, fully customizable
-- **82 configuration options** — proxy, auth, headers, concurrency, sandboxing, HTTP probing, and everything else Nuclei supports
+- **83 configuration options** — proxy, auth, headers, concurrency, sandboxing, HTTP probing, and everything else Nuclei supports
 - **Runtime templates** — pass raw YAML bytes, file paths, URLs, or directories per-scan. No upfront template configuration needed
 
 ### Who is this for?
@@ -360,7 +360,50 @@ async with ScanEngine(**wordpress_scanner().__dict__) as engine:
         print(f"[{r.severity}] {r.template_id} — {r.host}")
 ```
 
-### 6. API Security Assessment
+### 6. DAST Fuzzing with Full HTTP Request Metadata
+
+When fuzzing POST/PUT/PATCH endpoints, nuclei needs the original HTTP method, headers, and body to inject payloads correctly. By default, URL-only targets are sent as GET with no body. `RequestResponseTarget` solves this:
+
+**Go:**
+```go
+results, _ := engine.Scan(ctx, &nucleisdk.ScanOptions{
+    RequestResponseTargets: []nucleisdk.RequestResponseTarget{
+        {
+            URL:    "https://api.example.com/api/users",
+            Method: "POST",
+            Headers: map[string]string{
+                "Content-Type":  "application/json",
+                "Authorization": "Bearer eyJ...",
+            },
+            Body: `{"name":"test","email":"test@example.com"}`,
+        },
+    },
+    TemplateBytes: []nucleisdk.TemplateBytesEntry{
+        nucleisdk.TemplateBytes("sqli-test", sqliFuzzTemplate),
+    },
+})
+```
+
+**Python:**
+```python
+from nucleisdk import ScanEngine, TargetRequest, TemplateBytesEntry
+
+async with ScanEngine(rate_limit=100, dast_mode=True) as engine:
+    async for r in engine.scan(
+        request_response_targets=[
+            TargetRequest(
+                url="https://api.example.com/api/users",
+                method="POST",
+                headers={"Content-Type": "application/json", "Authorization": "Bearer eyJ..."},
+                body='{"name":"test","email":"test@example.com"}',
+            ),
+        ],
+        template_bytes=[TemplateBytesEntry("sqli-test", sqli_fuzz_template)],
+    ):
+        print(f"[{r.severity}] {r.template_id} - {r.matched_url}")
+```
+
+### 7. API Security Assessment
 
 Scan APIs with OpenAPI specs and authenticated requests:
 
@@ -484,7 +527,7 @@ async for r in engine.scan(target_file="/path/to/targets.txt", tags=["cve"]):
 
 ## Configuration Reference
 
-82 configuration options organized by category. Full reference in [Go SDK docs](docs/GOLANG-SDK.md) and [Python SDK docs](docs/PYTHON-SDK.md).
+83 configuration options organized by category. Full reference in [Go SDK docs](docs/GOLANG-SDK.md) and [Python SDK docs](docs/PYTHON-SDK.md).
 
 **Highlights:**
 
@@ -567,9 +610,9 @@ Python examples in [python/examples/](python/examples/).
 
 | Component | Version | Install |
 |-----------|---------|---------|
-| Go SDK | `v1.0.0` | `go get github.com/RevoltSecurities/nuclei-sdk` |
-| Python SDK | `1.0.0` | `pip install nuclei-sdk` |
-| Bridge Binary | `1.0.0` | Auto-installed by Python SDK |
+| Go SDK | `v1.1.0` | `go get github.com/RevoltSecurities/nuclei-sdk` |
+| Python SDK | `1.1.0` | `pip install nuclei-sdk` |
+| Bridge Binary | `1.1.0` | Auto-installed by Python SDK |
 
 ### Compatibility & Auto-Install
 

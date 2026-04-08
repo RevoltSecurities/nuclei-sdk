@@ -288,6 +288,7 @@ async with ScanEngine(
 | `template_dirs` | `list[str] \| None` | `None` | Direct template directories |
 | `template_bytes` | `list[TemplateBytesEntry] \| None` | `None` | Raw YAML templates |
 | `result_severity_filter` | `list[str] \| None` | `None` | Only return results matching these severities |
+| `request_response_targets` | `list[TargetRequest] \| None` | `None` | Full HTTP request targets for DAST fuzzing (preserves method, headers, body) |
 
 **Returns:** `AsyncIterator[ScanResult]`
 
@@ -549,6 +550,7 @@ async with ScanEngine(rate_limit=100, silent=True) as engine:
 | `template_dirs` | `list[str] \| None` | Direct template directories |
 | `template_bytes` | `list[TemplateBytesEntry] \| None` | Raw YAML templates |
 | `result_severity_filter` | `list[str] \| None` | Only return results matching these severities |
+| `request_response_targets` | `list[TargetRequest] \| None` | Full HTTP request targets for DAST fuzzing |
 
 ---
 
@@ -1075,6 +1077,38 @@ class ScanOptions:
     template_dirs: list[str] = field(default_factory=list)
     template_bytes: list[TemplateBytesEntry] = field(default_factory=list)
     result_severity_filter: list[str] = field(default_factory=list)
+    request_response_targets: list[TargetRequest] = field(default_factory=list)
+```
+
+### TargetRequest
+
+Full HTTP request metadata for DAST fuzzing targets. Without this, nuclei defaults to GET with no body for URL-only targets.
+
+```python
+@dataclass
+class TargetRequest:
+    url: str                          # Full URL
+    method: str = "GET"               # HTTP method (POST, PUT, PATCH, etc.)
+    headers: dict[str, str] = field(default_factory=dict)  # Request headers
+    body: str = ""                    # Request body
+```
+
+**Usage:**
+```python
+from nucleisdk import TargetRequest
+
+target = TargetRequest(
+    url="https://api.example.com/api/users",
+    method="POST",
+    headers={"Content-Type": "application/json"},
+    body='{"name":"test"}',
+)
+
+async for r in engine.scan(
+    request_response_targets=[target],
+    template_bytes=entries,
+):
+    print(r)
 ```
 
 ---
@@ -2266,4 +2300,4 @@ engine = ScanEngine(auth=[
 |----------|-------|-------------|
 | `MIN_BRIDGE_VERSION` | `"1.0.0"` | Minimum required bridge version |
 | `MAX_BRIDGE_VERSION` | `None` | Maximum allowed (None = no limit) |
-| `__version__` | `"1.0.0"` | Python SDK version |
+| `__version__` | `"1.1.0"` | Python SDK version |

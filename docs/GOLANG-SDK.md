@@ -957,6 +957,9 @@ type ScanOptions struct {
     Targets    []string              // URLs, domains, IPs to scan
     TargetFile string                // Path to file with targets (one per line)
 
+    // DAST targets with full HTTP request metadata
+    RequestResponseTargets []RequestResponseTarget // Preserves method, headers, body for fuzzing
+
     // Template filtering (filters from global store loaded at Setup)
     Tags          []string           // Filter by tags (OR logic)
     ExcludeTags   []string           // Exclude by tags
@@ -973,6 +976,15 @@ type ScanOptions struct {
 
     // Result filtering
     ResultSeverityFilter []string    // Post-execution severity filter
+}
+
+// RequestResponseTarget provides full HTTP request metadata for DAST fuzzing.
+// Without this, nuclei defaults to GET with no body for URL-only targets.
+type RequestResponseTarget struct {
+    URL     string            // Full URL (e.g., "https://example.com/api/users")
+    Method  string            // HTTP method (e.g., "POST", "PUT")
+    Headers map[string]string // Request headers
+    Body    string            // Request body
 }
 ```
 

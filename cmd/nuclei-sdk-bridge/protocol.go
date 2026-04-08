@@ -96,7 +96,7 @@ type BridgeConfig struct {
 	ResponseReadSize int `json:"response_read_size,omitempty"`
 
 	// Sandbox
-	SandboxAllowLocalFile bool `json:"sandbox_allow_local_file,omitempty"`
+	SandboxAllowLocalFile  bool `json:"sandbox_allow_local_file,omitempty"`
 	SandboxRestrictNetwork bool `json:"sandbox_restrict_network,omitempty"`
 
 	// Advanced network
@@ -139,19 +139,31 @@ type BridgeAuthConfig struct {
 
 // BridgeScanOptions maps to nucleisdk.ScanOptions (used in "scan" / "pool_submit").
 type BridgeScanOptions struct {
-	Targets       []string                   `json:"targets,omitempty"`
-	TargetFile    string                     `json:"target_file,omitempty"`
-	Tags          []string                   `json:"tags,omitempty"`
-	ExcludeTags   []string                   `json:"exclude_tags,omitempty"`
-	Severities    []string                   `json:"severities,omitempty"`
-	ProtocolTypes string                     `json:"protocol_types,omitempty"`
-	TemplateIDs   []string                   `json:"template_ids,omitempty"`
-	ExcludeIDs    []string                   `json:"exclude_ids,omitempty"`
-	Authors       []string                   `json:"authors,omitempty"`
-	TemplateFiles []string                   `json:"template_files,omitempty"`
-	TemplateDirs  []string                   `json:"template_dirs,omitempty"`
+	Targets              []string                   `json:"targets,omitempty"`
+	TargetFile           string                     `json:"target_file,omitempty"`
+	Tags                 []string                   `json:"tags,omitempty"`
+	ExcludeTags          []string                   `json:"exclude_tags,omitempty"`
+	Severities           []string                   `json:"severities,omitempty"`
+	ProtocolTypes        string                     `json:"protocol_types,omitempty"`
+	TemplateIDs          []string                   `json:"template_ids,omitempty"`
+	ExcludeIDs           []string                   `json:"exclude_ids,omitempty"`
+	Authors              []string                   `json:"authors,omitempty"`
+	TemplateFiles        []string                   `json:"template_files,omitempty"`
+	TemplateDirs         []string                   `json:"template_dirs,omitempty"`
 	TemplateBytes        []BridgeTemplateBytesEntry `json:"template_bytes,omitempty"`
 	ResultSeverityFilter []string                   `json:"result_severity_filter,omitempty"`
+
+	// RequestResponseTargets provides full HTTP request metadata for DAST fuzzing.
+	// When set, nuclei preserves the method, headers, and body instead of defaulting to GET.
+	RequestResponseTargets []BridgeRequestResponseTarget `json:"request_response_targets,omitempty"`
+}
+
+// BridgeRequestResponseTarget holds full HTTP request metadata for a DAST target.
+type BridgeRequestResponseTarget struct {
+	URL     string            `json:"url"`
+	Method  string            `json:"method"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Body    string            `json:"body,omitempty"`
 }
 
 // BridgeTemplateBytesEntry holds a named template with base64-encoded data.
@@ -495,6 +507,17 @@ func (o *BridgeScanOptions) toScanOptions() *nucleisdk.ScanOptions {
 	}
 
 	opts.ResultSeverityFilter = o.ResultSeverityFilter
+
+	// Convert RequestResponseTargets for DAST fuzzing
+	for _, rrt := range o.RequestResponseTargets {
+		opts.RequestResponseTargets = append(opts.RequestResponseTargets,
+			nucleisdk.RequestResponseTarget{
+				URL:     rrt.URL,
+				Method:  rrt.Method,
+				Headers: rrt.Headers,
+				Body:    rrt.Body,
+			})
+	}
 
 	return opts
 }

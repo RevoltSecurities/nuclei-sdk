@@ -271,6 +271,32 @@ class EngineConfig:
 
 
 @dataclass
+class TargetRequest:
+    """Full HTTP request metadata for a DAST fuzzing target.
+
+    When nuclei's fuzzing engine receives a target with only a URL, it defaults
+    to GET with no body. By providing a TargetRequest, the SDK constructs a full
+    RequestResponse object that preserves the HTTP method, headers, and body
+    during fuzzing.
+
+    This is essential for testing POST/PUT/PATCH endpoints.
+    """
+
+    url: str
+    method: str = "GET"
+    headers: Dict[str, str] = field(default_factory=dict)
+    body: str = ""
+
+    def to_dict(self) -> dict:
+        d: Dict[str, Any] = {"url": self.url, "method": self.method}
+        if self.headers:
+            d["headers"] = self.headers
+        if self.body:
+            d["body"] = self.body
+        return d
+
+
+@dataclass
 class ScanOptions:
     """Per-scan options."""
 
@@ -287,6 +313,7 @@ class ScanOptions:
     template_dirs: List[str] = field(default_factory=list)
     template_bytes: List[TemplateBytesEntry] = field(default_factory=list)
     result_severity_filter: List[str] = field(default_factory=list)
+    request_response_targets: List[TargetRequest] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         d: Dict[str, Any] = {}
@@ -316,4 +343,8 @@ class ScanOptions:
             d["template_bytes"] = [tb.to_dict() for tb in self.template_bytes]
         if self.result_severity_filter:
             d["result_severity_filter"] = self.result_severity_filter
+        if self.request_response_targets:
+            d["request_response_targets"] = [
+                rrt.to_dict() for rrt in self.request_response_targets
+            ]
         return d

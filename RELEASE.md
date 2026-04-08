@@ -1,3 +1,67 @@
+# v1.1.0
+
+## DAST Fuzzing: Full HTTP Request Metadata (`RequestResponseTarget`)
+
+When nuclei's fuzzing engine receives a target as a plain URL string, it defaults to `GET` with no body — this means POST/PUT/PATCH endpoints are never tested correctly. `RequestResponseTarget` fixes this by providing the full HTTP method, headers, and body to the fuzzing engine.
+
+### New Types
+
+**Go SDK:**
+- `RequestResponseTarget` struct — URL, Method, Headers, Body
+- `ScanOptions.RequestResponseTargets` field
+- `WithRequestResponseTargets()` option function
+
+**Python SDK:**
+- `TargetRequest` dataclass — url, method, headers, body
+- `ScanOptions.request_response_targets` field
+- `scan(request_response_targets=[...])` parameter on `ScanEngine` and `ScanPool`
+
+**Bridge Protocol:**
+- `request_response_targets` field in scan options JSON
+
+### Usage (Go)
+
+```go
+results, _ := engine.Scan(ctx, &nucleisdk.ScanOptions{
+    RequestResponseTargets: []nucleisdk.RequestResponseTarget{{
+        URL:     "https://api.example.com/api/users",
+        Method:  "POST",
+        Headers: map[string]string{"Content-Type": "application/json"},
+        Body:    `{"name":"test"}`,
+    }},
+    TemplateBytes: entries,
+})
+```
+
+### Usage (Python)
+
+```python
+from nucleisdk import ScanEngine, TargetRequest
+
+async for r in engine.scan(
+    request_response_targets=[
+        TargetRequest(
+            url="https://api.example.com/api/users",
+            method="POST",
+            headers={"Content-Type": "application/json"},
+            body='{"name":"test"}',
+        ),
+    ],
+    template_bytes=entries,
+):
+    print(f"[{r.severity}] {r.template_id}")
+```
+
+### Technical Details
+
+Nuclei's fuzzing engine has two code paths in `request_fuzz.go`:
+1. **ReqResp path**: When `MetaInput.ReqResp != nil` — preserves method, headers, body
+2. **URL-only path**: When `ReqResp == nil` — hardcodes `GET` with `nil` body
+
+`RequestResponseTarget` ensures the SDK constructs `MetaInput` entries with `ReqResp` populated, triggering path #1.
+
+---
+
 # v1.0.0
 
 The first release of **nuclei-sdk** -- a multi-language SDK for building custom security scanners powered by [Nuclei](https://github.com/projectdiscovery/nuclei).

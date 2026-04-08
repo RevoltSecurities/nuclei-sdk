@@ -194,6 +194,17 @@ func WithTargetReader(reader io.Reader) Option {
 	}
 }
 
+// WithRequestResponseTargets adds full HTTP request targets for DAST fuzzing.
+// Each target includes the URL, HTTP method, headers, and body. This triggers
+// nuclei's ReqResp code path, which preserves the method and body during fuzzing
+// instead of defaulting to GET with no body.
+func WithRequestResponseTargets(targets ...RequestResponseTarget) Option {
+	return func(c *ScanConfig) error {
+		c.reqRespTargets = append(c.reqRespTargets, targets...)
+		return nil
+	}
+}
+
 // WithOpenAPISpec sets an OpenAPI specification file for API security scanning.
 // This is mutually exclusive with WithTargets/WithTargetFile/WithTargetReader.
 func WithOpenAPISpec(path string) Option {

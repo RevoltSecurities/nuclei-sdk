@@ -12,6 +12,7 @@ from .models import (
     LabeledResult,
     ScanOptions,
     ScanResult,
+    TargetRequest,
     TemplateBytesEntry,
 )
 from .pool import ScanPool
@@ -85,6 +86,7 @@ class ScanEngine:
         template_dirs: Optional[List[str]] = None,
         template_bytes: Optional[List[TemplateBytesEntry]] = None,
         result_severity_filter: Optional[List[str]] = None,
+        request_response_targets: Optional[List[TargetRequest]] = None,
     ) -> AsyncIterator[ScanResult]:
         """Run a lightweight scan and yield results asynchronously.
 
@@ -95,6 +97,9 @@ class ScanEngine:
             protocol_types: Filter by protocol (http, dns, ssl, network).
             template_bytes: Raw YAML templates as TemplateBytesEntry objects.
             result_severity_filter: Only return results matching these severities.
+            request_response_targets: Full HTTP request targets for DAST fuzzing.
+                When provided, nuclei preserves the method, headers, and body
+                instead of defaulting to GET with no body.
 
         Yields:
             ScanResult for each finding.
@@ -115,6 +120,7 @@ class ScanEngine:
             template_dirs=template_dirs or [],
             template_bytes=template_bytes or [],
             result_severity_filter=result_severity_filter or [],
+            request_response_targets=request_response_targets or [],
         )
 
         scan_id = f"scan-{uuid.uuid4().hex[:8]}"

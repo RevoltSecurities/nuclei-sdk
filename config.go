@@ -29,6 +29,7 @@ type ScanConfig struct {
 	targets        []string
 	targetFile     string
 	targetReader   io.Reader
+	reqRespTargets []RequestResponseTarget
 	excludeTargets []string
 	openAPISpec    string
 	openAPIMode    string
